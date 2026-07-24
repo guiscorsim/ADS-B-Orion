@@ -1,0 +1,15 @@
+# Local IQ fixtures
+sample.wav
+sample.sc16
+bench/sample.wav
+bench/sample.sc16
+
+# Bench run outputs
+bench/out/
+bench/out-*/
+
+# Rust / Nix local artifacts
+target/
+.direnv/
+.result
+result

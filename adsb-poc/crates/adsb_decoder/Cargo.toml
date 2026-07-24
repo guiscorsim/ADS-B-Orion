@@ -1,0 +1,16 @@
+[package]
+name = "adsb_decoder"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Hand-rolled Mode S / ADS-B IQ demod + decode (research/POC)"
+
+[[bin]]
+name = "adsb_decoder"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+memmap2 = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
