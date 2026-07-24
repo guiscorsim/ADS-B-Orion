@@ -29,7 +29,7 @@ This folder contains exclusively the vital files for the system to work:
 
 ## 🚀 How to Run the System
 
-From this folder, install dependencies and start with `run.py`. Requires **Python 3.11+** (pyModeS 3).
+From this folder, install dependencies and start with `run.py`. Requires **Python 3.11** or greater.
 
 **With [uv](https://docs.astral.sh/uv/) (recommended):**
 
@@ -41,7 +41,7 @@ uv run run.py
 **With pip:**
 
 ```bash
-pip install "pandas" "pyModeS>=3" "Flask"
+pip install pandas pyModeS Flask
 python run.py
 ```
 
@@ -99,4 +99,5 @@ As soon as the antenna picks up a real plane flying over your house, `server.py`
 
 ## 📦 Dependencies
 
-Python **3.11+**, plus `pandas`, `pyModeS>=3`, and `Flask`. Prefer `uv sync` (uses `pyproject.toml` / `uv.lock` and a local `.venv`), or install with `pip` as shown above.
+Declared in `pyproject.toml`: Python **3.11+**, `pandas`, `pyModeS>=3`, and `Flask`. Prefer `uv sync` (lockfile + local `.venv`), or install with `pip` as shown above.
+
