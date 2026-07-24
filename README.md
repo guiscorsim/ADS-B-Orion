@@ -1,7 +1,5 @@
 # ADS-B-Orion
 
-CubeDesign ADS-B work split across two sibling projects:
-
 | Folder | Role |
 |--------|------|
 | [`OrionRadar/`](OrionRadar/) | Python receiver / simulator / web UI |
