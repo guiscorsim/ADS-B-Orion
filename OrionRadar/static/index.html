@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Radar System - ADS-B Telemetry</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app-container">
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <header>
+                <div class="logo">
+                    <i class="fa-solid fa-radar fa-spin-pulse"></i>
+                    <h1>ORION<span>RADAR</span></h1>
+                </div>
+                <div class="status-indicator">
+                    <span class="pulse-dot"></span> Live Tracking
+                </div>
+            </header>
+
+            <section class="stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="stat-airborne">0</div>
+                    <div class="stat-label">Airborne</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="stat-ground">0</div>
+                    <div class="stat-label">Ground</div>
+                </div>
+            </section>
+
+            <section class="aircraft-list-container">
+                <h3>Tracked Targets</h3>
+                <div class="list-header">
+                    <span>ICAO</span>
+                    <span>FLIGHT</span>
+                </div>
+                <ul id="aircraft-list">
+                    <!-- Dynamic List items go here -->
+                </ul>
+            </section>
+        </aside>
+
+        <!-- Main Map Area -->
+        <main id="map-area">
+            <div id="map"></div>
+            
+            <!-- Floating overlay for selected aircraft details -->
+            <div id="telemetry-panel" class="hidden">
+                <div class="panel-header">
+                    <h2 id="panel-icao">---</h2>
+                    <div>
+                        <button id="info-panel" class="btn-icon"><i class="fa-solid fa-circle-info"></i></button>
+                        <button id="close-panel" class="btn-icon"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+                <div class="telemetry-grid">
+                    <div class="data-group">
+                    <i id="panel-icon-model" class="fa-solid fa-plane"></i>
+                    <div class="data-info">
+                        <label id="panel-label-model">Aircraft Model</label>
+                        <span id="panel-model">---</span>
+                    </div>
+                </div>
+                <div class="data-group">
+                    <i class="fa-solid fa-building"></i>
+                    <div class="data-info">
+                        <label>Operator</label>
+                        <span id="panel-operator">---</span>
+                    </div>
+                </div>
+                <div class="data-group">
+                    <i class="fa-solid fa-plane-up"></i>
+                    <div class="data-info">
+                        <label>Altitude</label>
+                        <span id="panel-alt">--- ft</span>
+                    </div>
+                </div>
+                    <div class="data-group">
+                        <i class="fa-solid fa-gauge-high"></i>
+                        <div class="data-info">
+                            <label>Velocity</label>
+                            <span id="panel-vel">--- kt</span>
+                        </div>
+                    </div>
+                    <div class="data-group">
+                        <i class="fa-regular fa-compass"></i>
+                        <div class="data-info">
+                            <label>Heading</label>
+                            <span id="panel-hdg">---°</span>
+                        </div>
+                    </div>
+                    <div class="data-group">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <div class="data-info">
+                            <label>Coords</label>
+                            <span id="panel-coord">---, ---</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Aircraft Info Modal -->
+    <div id="info-modal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>RAB Database - <span id="modal-reg">---</span></h2>
+                <button id="close-modal" class="btn-icon"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-tabs">
+                    <button class="modal-tab-btn active" data-tab="tab-tec">Technical Details</button>
+                    <button class="modal-tab-btn" data-tab="tab-op">Operator(s)</button>
+                    <button class="modal-tab-btn" data-tab="tab-prop">Owner(s)</button>
+                    <button class="modal-tab-btn" data-tab="tab-adsb">ADS-B Telemetry</button>
+                </div>
+                
+                <div id="tab-tec" class="modal-tab-content active">
+                    <div class="modal-grid">
+                        <div>
+                            <p><strong>Manufacturer:</strong><br><span id="m-fab">---</span></p>
+                            <p><strong>Model:</strong><br><span id="m-mod">---</span></p>
+                            <p><strong>Serial Number:</strong><br><span id="m-ser">---</span></p>
+                            <p><strong>Configured for:</strong><br><span id="m-cfg">---</span></p>
+                            <p><strong>Certification Category:</strong><br><span id="m-cat">---</span></p>
+                            <p><strong>Year of Manufacture:</strong><br><span id="m-ano">---</span></p>
+                            <p><strong>ICAO Type:</strong><br><span id="m-icao">---</span></p>
+                        </div>
+                        <div>
+                            <p><strong>Type Rating:</strong><br><span id="m-hab">---</span></p>
+                            <p><strong>Aircraft Class:</strong><br><span id="m-cls">---</span></p>
+                            <p><strong>Minimum Crew:</strong><br><span id="m-trip">---</span></p>
+                            <p><strong>Max Passengers:</strong><br><span id="m-pax">---</span></p>
+                            <p><strong>Number of Seats:</strong><br><span id="m-ast">---</span></p>
+                            <p><strong>Max Takeoff Weight:</strong><br><span id="m-pmd">---</span></p>
+                        </div>
+                    </div>
+                    <hr class="modal-hr">
+                    <div class="modal-grid">
+                        <div>
+                            <p><strong>Aircraft Status:</strong><br><span id="m-sit">---</span></p>
+                            <p><strong>CVA Validity:</strong><br><span id="m-cva">---</span></p>
+                            <p><strong>Restriction:</strong><br><span id="m-res">---</span></p>
+                        </div>
+                        <div>
+                            <p><strong>Encumbrance (GRAVAME):</strong><br><span id="m-grav">---</span></p>
+                            <p><strong>Operator Type:</strong><br><span id="m-tpop">---</span></p>
+                            <p><strong>CA Type:</strong><br><span id="m-tpca">---</span></p>
+                            <p><strong>Purpose:</strong><br><span id="m-prop">---</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="tab-op" class="modal-tab-content">
+                    <p><strong>Operator:</strong> <span id="m-op-nome">---</span></p>
+                    <p><strong>CPF/CNPJ:</strong> <span id="m-op-doc">---</span></p>
+                </div>
+                
+                <div id="tab-prop" class="modal-tab-content">
+                    <p><strong>Owner:</strong> <span id="m-pr-nome">---</span></p>
+                    <p><strong>CPF/CNPJ:</strong> <span id="m-pr-doc">---</span></p>
+                </div>
+
+                <div id="tab-adsb" class="modal-tab-content">
+                    <div class="modal-grid">
+                        <div>
+                            <p><strong>Transmitted Callsign:</strong><br><span id="m-adsb-callsign" class="highlight-data">Waiting...</span></p>
+                            <p><strong>ADS-B Version:</strong><br>Version <span id="m-adsb-version" class="highlight-data">Waiting...</span></p>
+                        </div>
+                        <div>
+                            <p><strong>Emitter Category:</strong><br><span id="m-adsb-category" class="highlight-data">Waiting...</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Script -->
+    <script src="script.js"></script>
+</body>
+</html>
