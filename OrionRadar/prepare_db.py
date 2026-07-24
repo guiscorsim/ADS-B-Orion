@@ -5,7 +5,11 @@ import json
 import pandas as pd
 
 df = pd.read_csv(
-    "dados_aeronaves.csv", sep=";", encoding="latin1", skiprows=1, low_memory=False
+    "dados_aeronaves.csv",
+    sep=";",
+    encoding="utf-8-sig",
+    skiprows=1,
+    low_memory=False,
 )
 df = df.dropna(subset=["MARCAS", "NM_FABRICANTE", "DS_MODELO", "OPERADORES"])
 sample_planes = df.sample(15)
