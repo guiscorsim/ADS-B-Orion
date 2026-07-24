@@ -68,6 +68,8 @@ def _wait_until(
         if process is not None and process.poll() is not None:
             return f"process exited {process.returncode}"
         if predicate():
+            if process is not None and process.poll() is not None:
+                return f"process exited {process.returncode}"
             return None
         time.sleep(poll_s)
     if process is not None and process.poll() is not None:
@@ -81,6 +83,19 @@ def _tcp_open(host: str, port: int) -> bool:
             return True
     except OSError:
         return False
+
+
+def _port_busy(host: str, port: int, *, sock_type: int) -> bool:
+    sock = socket.socket(socket.AF_INET, sock_type)
+    if sock_type == socket.SOCK_STREAM:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    try:
+        sock.bind((host, port))
+        return False
+    except OSError:
+        return True
+    finally:
+        sock.close()
 
 
 def main() -> None:
@@ -108,14 +123,23 @@ def main() -> None:
         _abort("sample ANAC fleet", f"{AIRCRAFT_DB} was not created")
     _step("sample ANAC fleet", "ok")
 
+    busy: list[str] = []
+    if _port_busy(RADAR_HOST, RADAR_PORT, sock_type=socket.SOCK_STREAM):
+        busy.append(f"tcp {RADAR_HOST}:{RADAR_PORT}")
+    if _port_busy(UDP_IP, UDP_PORT, sock_type=socket.SOCK_DGRAM):
+        busy.append(f"udp {UDP_IP}:{UDP_PORT}")
+    if busy:
+        _abort(
+            "ports available",
+            f"{', '.join(busy)} already in use — stop the other OrionRadar instance",
+        )
+
     child_env = {**os.environ, "ORION_MANAGED": "1"}
     server_process = subprocess.Popen(
         [sys.executable, "server.py"],
         env=child_env,
         start_new_session=True,
     )
-    # UDP binds in-process before Flask listens; TCP ready is enough without
-    # a bind-steal probe on :20000.
     server_err = _wait_until(
         lambda: _tcp_open(RADAR_HOST, RADAR_PORT),
         timeout_s=SERVER_READY_TIMEOUT_S,
