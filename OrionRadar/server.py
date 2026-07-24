@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import socket
+import sys
 import threading
 import time
 from contextlib import suppress
@@ -107,9 +108,7 @@ except (OSError, csv.Error, KeyError, UnicodeDecodeError) as e:
 app = Flask(__name__, static_folder="static", static_url_path="")
 
 
-def udp_listener() -> None:
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((UDP_IP, UDP_PORT))
+def udp_listener(sock: socket.socket) -> None:
     if os.environ.get("ORION_MANAGED") != "1":
         print(f"UDP receiver on {UDP_IP}:{UDP_PORT}")
 
@@ -170,7 +169,17 @@ def get_aircraft():
 
 
 if __name__ == "__main__":
-    t = threading.Thread(target=udp_listener, daemon=True)
+    udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        udp_sock.bind((UDP_IP, UDP_PORT))
+    except OSError as exc:
+        print(
+            f"UDP bind failed on {UDP_IP}:{UDP_PORT}: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    t = threading.Thread(target=udp_listener, args=(udp_sock,), daemon=True)
     t.start()
 
     # Always mute werkzeug request logs for this lab UI.
