@@ -1,0 +1,14 @@
+[project]
+name = "orionradar"
+version = "0.1.0"
+description = "Live ADS-B tracking system and simulator with a web radar UI"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flask",
+    "pandas",
+    "pymodes",
+]
+
+[tool.uv]
+package = false
