@@ -10,10 +10,12 @@ OrionRadar is a complete system for simulating, processing, and visualizing aero
 
 This folder contains exclusively the vital files for the system to work:
 
+- `adsb_track.py`: Shared DF17 track state and CPR position decode used by `server.py` and the optional CLI `receiver.py`.
 - `simulator.py`: The simulation engine. It reads aircraft from the database and generates raw hexadecimal ADS-B messages (exactly like a real transponder) for aircraft in the air (moving) and vehicles/aircraft on the ground. These messages are continuously transmitted via UDP on port `20000`.
 - `server.py`: The heart of the backend. It performs two functions simultaneously:
   - Runs a Flask Web server on port `5000` that serves the visual interface.
   - Has a background thread (`Background UDP Receiver`) listening on port `20000`. It decodes the raw ADS-B messages using the `pyModeS` library, calculates coordinates (lat/lon), altitude, and speed, cross-references the information with the Brazilian Aeronautical Registry (RAB) database, saves local logs, and exposes the data through a JSON API (`/api/aircraft`).
+- `receiver.py`: Optional standalone CLI decoder on the same UDP port (do not run alongside `server.py`).
 - `prepare_db.py`: A data processing utility. It reads the massive original ANAC file (`dados_aeronaves.csv`) and samples random aircraft. Then, it generates enriched Base64 records (also including simulated ground fleet) to build the lean `aircraft_database.csv` database.
 - `dados_aeronaves.csv`: The official raw database from the Brazilian Aeronautical Registry (RAB), containing all certified aircraft.
 - `aircraft_database.csv`: The processed and mapped database by `prepare_db.py`, from which the simulator pulls its targets and from which the server pulls the complete technical data sheet (operators, owners, category, manufacturer, status).
@@ -27,7 +29,7 @@ This folder contains exclusively the vital files for the system to work:
 
 ## 🚀 How to Run the System
 
-From this folder, install dependencies and start with `run.py`.
+From this folder, install dependencies and start with `run.py`. Requires **Python 3.11+** (pyModeS 3).
 
 **With [uv](https://docs.astral.sh/uv/) (recommended):**
 
@@ -39,7 +41,7 @@ uv run run.py
 **With pip:**
 
 ```bash
-pip install pandas pyModeS Flask
+pip install "pandas" "pyModeS>=3" "Flask"
 python run.py
 ```
 
@@ -97,4 +99,4 @@ As soon as the antenna picks up a real plane flying over your house, `server.py`
 
 ## 📦 Dependencies
 
-`pandas`, `pyModeS`, and `Flask`. Prefer `uv sync` (uses `pyproject.toml` / `uv.lock` and a local `.venv`), or install the same packages with `pip` as shown above.
+Python **3.11+**, plus `pandas`, `pyModeS>=3`, and `Flask`. Prefer `uv sync` (uses `pyproject.toml` / `uv.lock` and a local `.venv`), or install with `pip` as shown above.
